@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Video/Canvas Demo 1</title>
+		<style>
+			body { background: black; }
+
+			#c {
+				position: absolute;
+				top: 			 0;
+				bottom: 	 0;
+				left: 		 0;
+				right: 		 0;
+				width: 	100%;
+				height: 100%;
+			}
+
+			#v {
+				position: absolute;
+				top:  50%;
+				left: 50%;
+				margin: -180px 0 0 -240px;
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id='c'></canvas>
+		<video id='v' controls loop>
+			<source src='video.webm' type='video/webm'>
+			<source src='video.ogg'  type='video/ogg'>
+			<source src='video.mp4'	 type='video/mp4'>
+		</video>
+		<script>
+			document.addEventListener('DOMContentLoaded',
+				function() {
+					var v = document.getElementById('v');
+					var canvas = document.getElementById('c');
+					var context = canvas.getContext('2d');
+					var back = document.createElement('canvas');
+					var backcontext = back.getContext('2d');
+
+					var cw, ch;
+
+					v.addEventListener('play', function(){
+						cw = v.clientWidth;
+						ch = v.clientHeight;
+						canvas.width = cw;
+						canvas.height = ch;
+						back.width = cw;
+						back.height = ch;
+						draw(v, context, backcontext, cw, ch);
+					}, false);
+				}, false
+			);
+
+			function draw(v,c,bc,w,h) {
+				if(v.paused || v.ended) return false;
+				// draw it on the backing canvas
+				bc.drawImage(v,0,0,w,h);
+				// grab pixel data from backing canvas
+				var idata = bc.getImageData(0,0,w,h);
+				var data = idata.data;
+				// loop through the pixels, turn to greyscale
+				for(var i = 0; i < data.length; i+=4) {
+					var r = data[i];
+					var g = data[i+1];
+					var b = data[i+2];
+					var brightness = (3*r+4*g+b) >>> 3;
+					data[i] = brightness;
+					data[i+1] = brightness;
+					data[i+2] = brightness;
+				}
+				idata.data = data;
+				// draw pixels on the visible canvas
+				c.putImageData(idata,0,0)
+				// start over
+				setTimeout(function(){ draw(v,c,bc,w,h); }, 0);
+			}
+		</script>
+	</body>
+</html>
